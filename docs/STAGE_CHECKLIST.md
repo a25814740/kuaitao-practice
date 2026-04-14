@@ -49,20 +49,21 @@
 
 ### 子步驟
 
-- [ ] 先寫死預設下班時間。
-- [ ] 建立目前時間狀態，定時更新。
-- [ ] 用 `computed` 算出倒數文字。
-- [ ] 建立下班狀態判斷，例如未下班、已下班、已加班。
-- [ ] 用 `v-if` / `v-else` 切換按鈕文案。
-- [ ] 點擊後顯示與預設下班時間的差距。
-- [ ] 整理條件邏輯，避免模板過度複雜。
-- [ ] 更新 `docs/DEVLOG.md`。
+- [x] 先寫死預設下班時間（`OFF_WORK_HOUR` / `OFF_WORK_MINUTE`）。
+- [x] 建立目前時間狀態 `now`，用 `setInterval` 每秒更新。
+- [x] 用 `computed` 算出下班時間 `offWorkTime` 與差距 `diffMs`。
+- [x] 用 `computed` 判斷狀態 `status`（`before` / `on` / `after`）。
+- [x] 用 `computed` 產出倒數顯示文字（`diffText`、`countdownLabelText`、`statusText`）。
+- [x] 用 `:class` / `v-if` 做狀態切換（加班時變紅、結果區塊有資料才顯示）。
+- [x] 點擊後記錄當下時間，並顯示與預設下班時間的差距（提早 / 加班多久）。
+- [x] 整理條件邏輯，避免在模板塞太多計算。
+- [x] 更新 `docs/DEVLOG.md`。
 
 ### 驗收
 
-- [ ] 倒數會持續變化。
-- [ ] 不同狀態會顯示不同文案。
-- [ ] 能說清楚 `computed` 和 `watch` 的差別。
+- [x] 倒數會持續變化（每秒更新）。
+- [x] 不同狀態會顯示不同文案或樣式（例如加班紅色提示）。
+- [x] 能說清楚 `computed` 和 `watch` 的差別（本階段主要用 `computed` 完成）。
 
 ---
 
