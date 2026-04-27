@@ -1,8 +1,8 @@
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, unref, type MaybeRef } from 'vue'
 
 export type EscapeTimerOptions = {
-  offWorkHour: number
-  offWorkMinute: number
+  offWorkHour: MaybeRef<number>
+  offWorkMinute: MaybeRef<number>
   tickMs?: number
 }
 
@@ -13,7 +13,7 @@ export function useEscapeTimer(options: EscapeTimerOptions) {
 
   function makeOffWorkTime(base: Date) {
     const d = new Date(base)
-    d.setHours(options.offWorkHour, options.offWorkHour, 0, 0)
+    d.setHours(unref(options.offWorkHour), unref(options.offWorkMinute), 0, 0)
     return d
   }
 

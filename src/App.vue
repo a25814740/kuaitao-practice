@@ -7,17 +7,18 @@ import TimeCards from '@/components/TimeCards.vue'
 import ProfilePanel from '@/components/ProfilePanel.vue'
 import ResultCard from '@/components/ResultCard.vue'
 import RecordHistory from '@/components/RecordHistory.vue'
+import SettingPanel from '@/components/SettingPanel.vue'
 
 import { useEscapeTimer } from './composables/useEscapeTimer'
 import { useOffDutyStatus } from './composables/useOffDutyStatus'
+import { useUserStore } from './stores/user'
 
-const OFF_WORK_HOUR = 15
-const OFF_WORK_MINUTE = 39
+const user = useUserStore()
 
 const { now, diffMs, diffText, offWorkTimeText, nowText, makeOffWorkTime, formatTime, formatHms } =
   useEscapeTimer({
-    offWorkHour: OFF_WORK_HOUR,
-    offWorkMinute: OFF_WORK_MINUTE,
+    offWorkHour: computed(() => user.offWorkHour),
+    offWorkMinute: computed(() => user.offWorkMinute),
     tickMs: 1000,
   })
 
@@ -124,6 +125,8 @@ function handleClick() {
               :countdown-label="countdownLabelText"
               :diff-text="diffText"
               :status="status"
+              :nickname="user.nickname"
+              :job-type="user.jobType"
             />
           </div>
         </section>
@@ -140,6 +143,8 @@ function handleClick() {
         />
 
         <RecordHistory :items="recordItems"></RecordHistory>
+
+        <SettingPanel />
       </main>
     </div>
   </div>
@@ -149,7 +154,7 @@ function handleClick() {
 .wrapper {
   background-color: #333;
   color: #fff;
-  height: 100vh;
+  /* height: 100vh; */
 }
 .container {
   padding: 2rem 1rem;

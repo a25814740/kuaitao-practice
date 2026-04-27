@@ -27,3 +27,10 @@
 - 為什麼這樣做：把「UI」跟「可重用邏輯」切開，讓同一套時間/狀態邏輯未來可以給不同頁面或不同元件使用，也讓 `App.vue` 更像真實專案的頁面組裝層。
 - 與 Stage 3 差異：Stage 3 是 UI 拆元件；Stage 4 是把元件中的共用邏輯再抽到 composables。
 - 學到的概念：composable 的責任切分、`onMounted/onUnmounted` 放在 composable 內管理副作用、以及用 `requestAnimationFrame` 做時間更新迴圈（並用 tick 間隔控制更新頻率）。
+
+## 2026-04-28｜Stage 5 Pinia 全域狀態
+- 做了什麼：新增 user store（暱稱、頭像、職業、下班時間、收入），並做設定面板 `SettingPanel` 直接修改 store；首頁讀取 store 的下班時間做倒數，並顯示暱稱/職業。
+- 改了哪些檔案：新增 `src/stores/user.ts`、`src/components/SettingPanel.vue`；更新 `src/App.vue`、`src/components/ProfilePanel.vue`；調整 `src/composables/useEscapeTimer.ts` 讓下班時間可接受 `computed/ref`。
+- 為什麼這樣做：把「跨元件共享的使用者資料」集中到 Pinia，避免 props 一路傳遞；同時保留互動紀錄等狀態在頁面內，降低全域狀態膨脹。
+- 與 Stage 4 差異：Stage 4 抽離邏輯；Stage 5 開始管理全域狀態，讓不同元件使用同一份資料。
+- 學到的概念：Pinia setup store、store state 的讀寫、用 `v-model` 綁 store、區分 local state 與 global state。
