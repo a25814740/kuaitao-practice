@@ -76,21 +76,22 @@
 
 ### 子步驟
 
-- [ ] 盤點首頁有哪些區塊適合拆元件。
-- [ ] 建立 `TimeDisplay.vue`。
-- [ ] 建立 `ResultCard.vue`。
-- [ ] 建立 `EscapeButton.vue`。
-- [ ] 建立 `RecordHistory.vue`。
-- [ ] 用 `defineProps` 傳遞顯示資料。
-- [ ] 用 `defineEmits` 傳遞按鈕互動事件。
-- [ ] 整理 `App.vue`，只保留頁面組裝邏輯。
-- [ ] 更新 `docs/DEVLOG.md`。
+- [x] 盤點首頁有哪些區塊適合拆元件（時間卡片、倒數/狀態、按鈕、結果、歷史紀錄）。
+- [x] 建立 `TimeCards.vue`（用 `v-for` 顯示現在/下班時間）。
+- [x] 建立 `ProfilePanel.vue`（顯示倒數與狀態樣式）。
+- [x] 建立 `EscapeButton.vue`（按鈕元件）。
+- [x] 建立 `ResultCard.vue`（結果與最後點擊資訊）。
+- [x] 建立 `RecordHistory.vue`（最近點擊紀錄列表）。
+- [x] 用 `defineProps` 傳遞顯示資料（多個子元件以 props 接收資料）。
+- [x] 用 `defineEmits` 傳遞按鈕互動事件（`EscapeButton` 往父層 emit）。
+- [x] 整理 `App.vue`，頁面只保留「資料/計算/事件」與元件組裝。
+- [x] 更新 `docs/DEVLOG.md`。
 
 ### 驗收
 
-- [ ] `App.vue` 明顯變短、結構更清楚。
-- [ ] 子元件責任單純。
-- [ ] 能說清楚父傳子、子傳父流程。
+- [x] `App.vue` 結構更清楚（以元件組裝為主）。
+- [x] 子元件責任單純（展示與互動分離）。
+- [x] 能說清楚父傳子、子傳父流程（props 下傳、emit 上拋）。
 
 ---
 
@@ -103,20 +104,20 @@
 
 ### 子步驟
 
-- [ ] 找出與畫面無關的邏輯。
-- [ ] 建立 `useEscapeTimer`。
-- [ ] 建立 `useOffDutyStatus`。
-- [ ] 搬移計時器與狀態判斷邏輯。
-- [ ] 在頁面重新接回 composable 回傳資料。
-- [ ] 清理不再需要的重複程式。
-- [ ] 確認畫面行為與前一階段一致。
-- [ ] 更新 `docs/DEVLOG.md`。
+- [x] 找出與畫面無關的邏輯（時間更新、下班時間計算、狀態判斷、格式化）。
+- [x] 建立 `useEscapeTimer`（管理 `now`、下班時間、倒數差距、格式化與時間更新）。
+- [x] 建立 `useOffDutyStatus`（管理 `before/on/after` 狀態與文案）。
+- [x] 搬移計時器與狀態判斷邏輯到 composables。
+- [x] 在頁面重新接回 composable 回傳資料（`App.vue` 只做接線與事件）。
+- [x] 清理不再需要的重複程式（`App.vue` 不再持有 `onMounted/onUnmounted` 的時間更新）。
+- [x] 確認畫面行為與前一階段一致（倒數/點擊/結果/歷史紀錄不變）。
+- [x] 更新 `docs/DEVLOG.md`。
 
 ### 驗收
 
-- [ ] composable 可讀性清楚。
-- [ ] 元件內邏輯明顯減少。
-- [ ] 能說明為什麼這些邏輯適合抽出去。
+- [x] composable 可讀性清楚（以「時間」與「狀態」分層）。
+- [x] `App.vue` 邏輯明顯減少（主要是 state + 接線 + click handler）。
+- [x] 能說明為什麼這些邏輯適合抽出去（可重用、與 UI 無關、好測試）。
 
 ---
 

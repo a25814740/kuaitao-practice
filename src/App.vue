@@ -1,41 +1,32 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { quotes } from '@/data/quotes'
+
+import EscapeButton from '@/components/EscapeButton.vue'
+import TimeCards from '@/components/TimeCards.vue'
+import ProfilePanel from '@/components/ProfilePanel.vue'
+import ResultCard from '@/components/ResultCard.vue'
+import RecordHistory from '@/components/RecordHistory.vue'
+
+import { useEscapeTimer } from './composables/useEscapeTimer'
+import { useOffDutyStatus } from './composables/useOffDutyStatus'
 
 const OFF_WORK_HOUR = 15
 const OFF_WORK_MINUTE = 39
 
-type WorkStatus = 'before' | 'on' | 'after'
+const { now, diffMs, diffText, offWorkTimeText, nowText, makeOffWorkTime, formatTime, formatHms } =
+  useEscapeTimer({
+    offWorkHour: OFF_WORK_HOUR,
+    offWorkMinute: OFF_WORK_MINUTE,
+    tickMs: 1000,
+  })
 
-const now = ref(new Date())
+const { status, countdownLabelText } = useOffDutyStatus(diffMs)
+
 const lastClickTime = ref<Date | null>(null)
 const lastClickDeltaMs = ref<number | null>(null) // clickTime - offWorkTime(at click day)
 const clickCount = ref(0)
-
-let timerId: number | null = null
-
-function formatHms(ms: number) {
-  const totalSeconds = Math.abs(Math.floor(ms / 1000))
-  const hh = Math.floor(totalSeconds / 3600)
-  const mm = Math.floor((totalSeconds % 3600) / 60)
-  const ss = totalSeconds % 60
-  const pad2 = (n: number) => n.toString().padStart(2, '0')
-  return `${pad2(hh)}h ${pad2(mm)}m ${pad2(ss)}s`
-}
-
-function makeOffWorkTime(base: Date) {
-  const d = new Date(base)
-  d.setHours(OFF_WORK_HOUR, OFF_WORK_MINUTE, 0, 0)
-  return d
-}
-
-function formatTime(date: Date) {
-  return date.toLocaleTimeString('sv-SE', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
-}
+const records = ref<Array<{ clickTime: Date; deltaMs: number }>>([])
 
 function getDayOfYear(date: Date) {
   const start = new Date(date.getFullYear(), 0, 1)
@@ -49,21 +40,13 @@ function getDailyQuote(date: Date) {
   return quotes[index]
 }
 
-const offWorkTime = computed(() => makeOffWorkTime(now.value))
-const diffMs = computed(() => offWorkTime.value.getTime() - now.value.getTime())
-
-const status = computed<WorkStatus>(() => {
-  if (diffMs.value > 0) return 'before'
-  if (Math.abs(diffMs.value) <= 1000) return 'on'
-  return 'after'
-})
-
-const nowText = computed(() => formatTime(now.value))
-const offWorkTimeText = computed(() => formatTime(offWorkTime.value))
-const diffText = computed(() => formatHms(diffMs.value))
 const statusText = computed(() => (status.value === 'before' ? '🏃等待陶跑中' : '⚡命苦加班中'))
-const countdownLabelText = computed(() => (status.value === 'before' ? '距離下班' : '已加班'))
 const todayQuote = computed(() => getDailyQuote(now.value))
+
+const timeCards = computed(() => [
+  { title: '現在時間', value: nowText.value },
+  { title: '下班時間', value: offWorkTimeText.value },
+])
 
 const formattedLastClick = computed(() =>
   lastClickTime.value ? formatTime(lastClickTime.value) : '尚無紀錄',
@@ -76,6 +59,16 @@ const resultText = computed(() => {
   return `${prefix} ${formatHms(delta)}`
 })
 
+const recordItems = computed(() =>
+  records.value.map((r) => {
+    const prefix = r.deltaMs < 0 ? '提早' : '延後'
+    return {
+      timeText: formatTime(r.clickTime),
+      deltaText: `${prefix} ${formatHms(r.deltaMs)}`,
+    }
+  }),
+)
+
 function handleClick() {
   // 用 now 的時間戳記，確保顯示與倒數是同一個「現在」
   const clickTime = new Date(now.value.getTime())
@@ -84,20 +77,10 @@ function handleClick() {
   lastClickTime.value = clickTime
   lastClickDeltaMs.value = clickTime.getTime() - offWorkAtClick.getTime()
   clickCount.value += 1
+
+  records.value.unshift({ clickTime, deltaMs: lastClickDeltaMs.value })
+  if (records.value.length > 10) records.value.length = 10
 }
-
-onMounted(() => {
-  timerId = window.setInterval(() => {
-    now.value = new Date()
-  }, 1000)
-})
-
-onUnmounted(() => {
-  if (timerId !== null) {
-    window.clearInterval(timerId)
-    timerId = null
-  }
-})
 </script>
 
 <template>
@@ -137,49 +120,26 @@ onUnmounted(() => {
                 alt="大頭貼"
               />
             </div>
-            <div class="profile-info text-center">
-              <div class="text-xl font-black" :class="[status == 'after' ? 'text-[red]' : '']">
-                {{ diffText }}
-              </div>
-              <div
-                class="text-xs tracking-[1px] mt-1"
-                :class="[status == 'after' ? 'text-[red]' : '']"
-              >
-                {{ countdownLabelText }}
-              </div>
-            </div>
+            <ProfilePanel
+              :countdown-label="countdownLabelText"
+              :diff-text="diffText"
+              :status="status"
+            />
           </div>
         </section>
 
-        <section class="time-wrapper grid grid-cols-2 gap-3 mb-5">
-          <div
-            class="border border-solid border-[3px] border-[#fff] rounded-2xl bg-[#ddd] text-[#333] p-3"
-          >
-            <div class="text-xs tracking-[1px] mb-2">現在時間</div>
-            <div class="text-xl font-black">{{ nowText }}</div>
-          </div>
-          <div
-            class="border border-solid border-[3px] border-[#fff] rounded-2xl bg-[#ddd] text-[#333] p-3"
-          >
-            <div class="text-xs tracking-[1px] mb-2">下班時間</div>
-            <div class="text-xl font-black">{{ offWorkTimeText }}</div>
-          </div>
-        </section>
+        <TimeCards :items="timeCards" />
 
-        <button
-          class="block text-2xl border border-[3px] border-solid border-white rounded-3xl shadow-[3px_3px_3px_rgb(230,230,230)] w-full px-[.5rem] py-[1rem] mb-3 hover:bg-white hover:text-[#333] hover:translate-1 hover:shadow-[3px_3px_3px_rgb(255,0,0)]"
-          @click="handleClick"
-        >
-          塊陶 !! 🏃‍♂️💨
-        </button>
+        <EscapeButton label="塊陶 !! 🏃‍♂️💨" @escape="handleClick" />
 
-        <div class="result">
-          <div class="flex justify-between">
-            <div>最後點擊時間：{{ formattedLastClick }}</div>
-            <div>次數：{{ clickCount }}</div>
-          </div>
-          <div class="text-center mt-2" v-if="lastClickTime">{{ resultText }}</div>
-        </div>
+        <ResultCard
+          :formattedLastClick="formattedLastClick"
+          :clickCount="clickCount"
+          :resultText="resultText"
+          :lastClickTime="lastClickTime"
+        />
+
+        <RecordHistory :items="recordItems"></RecordHistory>
       </main>
     </div>
   </div>

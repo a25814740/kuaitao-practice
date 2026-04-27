@@ -1,47 +1,32 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { quotes } from '@/data/quotes'
 
 import EscapeButton from './components/EscapeButton.vue'
 import RecordHistory from './components/RecordHistory.vue'
 import ResultCard from './components/ResultCard.vue'
-import TimeDisplay from './components/TimeDisplay.vue'
+import ProfilePanel from './components/ProfilePanel.vue'
+import TimeCards from './components/TimeCards.vue'
+
+import { useEscapeTimer } from './composables/useEscapeTimer'
+import { useOffDutyStatus } from './composables/useOffDutyStatus'
 
 const OFF_WORK_HOUR = 15
 const OFF_WORK_MINUTE = 39
 
-type WorkStatus = 'before' | 'on' | 'after'
+const { now, diffMs, diffText, offWorkTimeText, nowText, makeOffWorkTime, formatTime, formatHms } =
+  useEscapeTimer({
+    offWorkHour: OFF_WORK_HOUR,
+    offWorkMinute: OFF_WORK_MINUTE,
+    tickMs: 1000,
+  })
 
-const now = ref(new Date())
+const { status, countdownLabelText } = useOffDutyStatus(diffMs)
+
 const lastClickTime = ref<Date | null>(null)
 const lastClickDeltaMs = ref<number | null>(null) // clickTime - offWorkTime(at click day)
 const clickCount = ref(0)
 const records = ref<Array<{ clickTime: Date; deltaMs: number }>>([])
-
-let timerId: number | null = null
-
-function formatHms(ms: number) {
-  const totalSeconds = Math.abs(Math.floor(ms / 1000))
-  const hh = Math.floor(totalSeconds / 3600)
-  const mm = Math.floor((totalSeconds % 3600) / 60)
-  const ss = totalSeconds % 60
-  const pad2 = (n: number) => n.toString().padStart(2, '0')
-  return `${pad2(hh)}h ${pad2(mm)}m ${pad2(ss)}s`
-}
-
-function makeOffWorkTime(base: Date) {
-  const d = new Date(base)
-  d.setHours(OFF_WORK_HOUR, OFF_WORK_MINUTE, 0, 0)
-  return d
-}
-
-function formatTime(date: Date) {
-  return date.toLocaleTimeString('sv-SE', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
-}
 
 function getDayOfYear(date: Date) {
   const start = new Date(date.getFullYear(), 0, 1)
@@ -54,21 +39,12 @@ function getDailyQuote(date: Date) {
   const index = (dayOfYear - 1) % quotes.length
   return quotes[index]
 }
-
-const offWorkTime = computed(() => makeOffWorkTime(now.value))
-const diffMs = computed(() => offWorkTime.value.getTime() - now.value.getTime())
-
-const status = computed<WorkStatus>(() => {
-  if (diffMs.value > 0) return 'before'
-  if (Math.abs(diffMs.value) <= 1000) return 'on'
-  return 'after'
-})
-
-const nowText = computed(() => formatTime(now.value))
-const offWorkTimeText = computed(() => formatTime(offWorkTime.value))
-const diffText = computed(() => formatHms(diffMs.value))
-const countdownLabelText = computed(() => (status.value === 'before' ? '距離下班' : '已加班'))
 const todayQuote = computed(() => getDailyQuote(now.value))
+
+const timeCards = computed(() => [
+  { title: '現在時間', value: nowText.value },
+  { title: '下班時間', value: offWorkTimeText.value },
+])
 
 const formattedLastClick = computed(() =>
   lastClickTime.value ? formatTime(lastClickTime.value) : '尚無紀錄'
@@ -103,19 +79,6 @@ function handleEscape() {
   records.value.unshift({ clickTime, deltaMs: lastClickDeltaMs.value })
   if (records.value.length > 10) records.value.length = 10
 }
-
-onMounted(() => {
-  timerId = window.setInterval(() => {
-    now.value = new Date()
-  }, 1000)
-})
-
-onUnmounted(() => {
-  if (timerId !== null) {
-    window.clearInterval(timerId)
-    timerId = null
-  }
-})
 </script>
 
 <template>
@@ -142,12 +105,8 @@ onUnmounted(() => {
           </div>
         </section>
 
-        <TimeDisplay
-          :countdown-label="countdownLabelText"
-          :diff-text="diffText"
-          :now-text="nowText"
-          :off-work-time-text="offWorkTimeText"
-        />
+        <TimeCards :items="timeCards" />
+        <ProfilePanel :countdown-label="countdownLabelText" :diff-text="diffText" />
 
         <EscapeButton label="塊陶 !! 🏃‍♂️💨" @escape="handleEscape" />
 
